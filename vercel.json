@@ -1,0 +1,13 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/chat",
+      "destination": "/api/chat"
+    }
+  ],
+  "functions": {
+    "api/chat.js": {
+      "runtime": "@vercel/node@3"
+    }
+  }
+}
