@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Workflow Optimizer — Raghav</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface-2: #1c1c1c;
+    --border: #2a2a2a;
+    --border-hover: #3a3a3a;
+    --text: #e8e8e8;
+    --text-muted: #888;
+    --text-dim: #555;
+    --accent: #c4f04d;
+    --accent-dim: rgba(196, 240, 77, 0.08);
+    --accent-glow: rgba(196, 240, 77, 0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 60px 24px 100px;
+  }
+
+  .header {
+    margin-bottom: 48px;
+    animation: fadeUp 0.6s ease-out;
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-dim);
+    padding: 6px 14px;
+    border-radius: 100px;
+    margin-bottom: 24px;
+    font-weight: 500;
+  }
+
+  .greeting {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(32px, 5vw, 44px);
+    font-weight: 400;
+    line-height: 1.2;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .greeting .name {
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  .intro {
+    font-size: 15px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    max-width: 600px;
+    margin-top: 20px;
+  }
+
+  .intro strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .cta-line {
+    font-size: 16px;
+    color: var(--text);
+    line-height: 1.6;
+    margin-top: 20px;
+    padding: 16px 20px;
+    background: var(--accent-dim);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 10px 10px 0;
+    font-weight: 400;
+  }
+
+  .cta-line em {
+    color: var(--accent);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  .input-section {
+    animation: fadeUp 0.6s ease-out 0.15s both;
+  }
+
+  .input-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .textarea-wrap {
+    position: relative;
+    border-radius: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+
+  .textarea-wrap:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim), 0 8px 32px rgba(0,0,0,0.3);
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 180px;
+    padding: 20px;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    resize: vertical;
+    outline: none;
+  }
+
+  textarea::placeholder { color: var(--text-dim); }
+
+  .textarea-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .char-count { font-size: 12px; color: var(--text-dim); }
+
+  .btn-analyze {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    background: var(--accent);
+    color: #0a0a0a;
+    border: none;
+    border-radius: 100px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.2px;
+  }
+
+  .btn-analyze:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px var(--accent-glow);
+  }
+
+  .btn-analyze:active { transform: translateY(0); }
+
+  .btn-analyze:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .btn-analyze svg { width: 16px; height: 16px; }
+
+  .examples {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    animation: fadeUp 0.6s ease-out 0.3s both;
+  }
+
+  .example-chip {
+    font-size: 13px;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 8px 16px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .example-chip:hover {
+    border-color: var(--border-hover);
+    color: var(--text);
+    background: var(--surface-2);
+  }
+
+  .loading {
+    display: none;
+    margin-top: 40px;
+    padding: 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+  }
+
+  .loading.active { display: block; }
+
+  .loading-bar {
+    height: 3px;
+    background: var(--surface-2);
+    border-radius: 100px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .loading-bar-inner {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    border-radius: 100px;
+    animation: loading 3s ease-in-out infinite;
+  }
+
+  .loading-text { font-size: 14px; color: var(--text-muted); }
+
+  .output {
+    display: none;
+    margin-top: 40px;
+    animation: fadeUp 0.4s ease-out;
+  }
+
+  .output.active { display: block; }
+
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .output-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 24px;
+  }
+
+  .btn-copy {
+    font-size: 13px;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 8px 16px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .btn-copy:hover {
+    border-color: var(--border-hover);
+    color: var(--text);
+  }
+
+  .output-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    line-height: 1.75;
+    font-size: 15px;
+    color: var(--text);
+  }
+
+  .output-card h2 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--accent);
+    margin: 28px 0 12px;
+  }
+
+  .output-card h2:first-child { margin-top: 0; }
+
+  .output-card h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 20px 0 8px;
+    color: var(--text);
+  }
+
+  .output-card p { margin-bottom: 12px; color: #ccc; }
+
+  .output-card ul, .output-card ol { padding-left: 20px; margin-bottom: 12px; }
+
+  .output-card li { margin-bottom: 6px; color: #ccc; }
+
+  .output-card strong { color: var(--text); font-weight: 600; }
+
+  .output-card code {
+    font-size: 13px;
+    background: var(--surface-2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent);
+  }
+
+  .output-cta {
+    margin-top: 24px;
+    padding: 24px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(196, 240, 77, 0.15);
+    border-radius: 16px;
+    text-align: center;
+  }
+
+  .output-cta p {
+    font-size: 15px;
+    color: var(--text);
+    margin-bottom: 4px;
+    line-height: 1.6;
+  }
+
+  .output-cta .cta-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .btn-reset {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--text-muted);
+    background: none;
+    border: 1px solid var(--border);
+    padding: 10px 20px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .btn-reset:hover {
+    border-color: var(--border-hover);
+    color: var(--text);
+  }
+
+  .footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-dim);
+    animation: fadeUp 0.6s ease-out 0.45s both;
+  }
+
+  .footer a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer a:hover { color: var(--accent); }
+
+  .error-msg {
+    display: none;
+    margin-top: 20px;
+    padding: 16px 20px;
+    background: rgba(255, 80, 80, 0.08);
+    border: 1px solid rgba(255, 80, 80, 0.2);
+    border-radius: 12px;
+    font-size: 14px;
+    color: #ff8080;
+  }
+
+  .error-msg.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes loading {
+    0% { width: 0%; }
+    50% { width: 70%; }
+    100% { width: 100%; }
+  }
+
+  @media (max-width: 480px) {
+    .container { padding: 40px 16px 80px; }
+    .examples { gap: 6px; }
+    .textarea-footer { flex-direction: column; gap: 12px; align-items: stretch; }
+    .btn-analyze { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="tag">From Raghav — AI Implementation</div>
+    <h1 class="greeting">Hi <span class="name">Salomon</span>,</h1>
+    <p class="intro">
+      I'm Raghav. I've built AI solutions and automations for CEOs and founders — from deal flow pipelines to fully automated reporting systems. Rather than telling you what I can do, <strong>I'd rather show you.</strong>
+    </p>
+    <div class="cta-line">
+      Describe any task or workflow that's eating your time → I'll show you <em>exactly</em> how I'd automate it, which tools I'd use, and how long it would take me to build it end to end.
+    </div>
+  </div>
+
+  <div class="input-section">
+    <div class="input-label">What's the workflow or challenge?</div>
+    <div class="textarea-wrap">
+      <textarea id="userInput" placeholder="e.g. I spend 3 hours every morning reviewing deal flow emails from founders, summarizing each pitch, and updating our tracking sheet before our partner meeting..."></textarea>
+      <div class="textarea-footer">
+        <span class="char-count" id="charCount">0 / 2000</span>
+        <button class="btn-analyze" id="analyzeBtn" onclick="analyze()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Show me the plan
+        </button>
+      </div>
+    </div>
+
+    <div class="examples">
+      <span class="example-chip" onclick="fillExample(this)">Deal flow review</span>
+      <span class="example-chip" onclick="fillExample(this)">Portfolio reporting</span>
+      <span class="example-chip" onclick="fillExample(this)">Meeting notes → action items</span>
+      <span class="example-chip" onclick="fillExample(this)">Due diligence research</span>
+      <span class="example-chip" onclick="fillExample(this)">LP communications</span>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="loading-bar"><div class="loading-bar-inner"></div></div>
+    <div class="loading-text">Mapping your workflow to AI solutions...</div>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <div class="output" id="output">
+    <div class="output-header">
+      <h2 class="output-title">Here's what I'd build for you</h2>
+      <button class="btn-copy" onclick="copyOutput()">Copy</button>
+    </div>
+    <div class="output-card" id="outputContent"></div>
+    <div class="output-cta">
+      <p>This is just the blueprint — I can build and ship this for you end to end.</p>
+      <span class="cta-sub">DM me on LinkedIn or reply to this message, and I'll get it done.</span>
+    </div>
+    <button class="btn-reset" onclick="reset()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+      Try another workflow
+    </button>
+  </div>
+
+  <div class="footer">
+    Built by Raghav · AI solutions for founders who'd rather build than admin
+  </div>
+</div>
+
+<script>
+const textarea = document.getElementById('userInput');
+const charCount = document.getElementById('charCount');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const loadingEl = document.getElementById('loading');
+const outputEl = document.getElementById('output');
+const outputContent = document.getElementById('outputContent');
+const errorMsg = document.getElementById('errorMsg');
+
+const examplePrompts = {
+  'Deal flow review': 'Every morning I spend 2-3 hours going through 30+ inbound emails from founders pitching their startups. I have to read each deck, summarize the key metrics, check if they fit our thesis, and update our Notion pipeline. Then I write a quick brief for our partner meeting.',
+  'Portfolio reporting': 'Every quarter I have to collect financial updates from 25+ portfolio companies, compile them into a standardized format, write qualitative summaries for each, and produce our LP report. This takes almost 2 weeks.',
+  'Meeting notes → action items': 'After every partner meeting and founder call, I need to write up notes, extract action items, assign them to the right people, and follow up. We have 15-20 meetings a week and things slip through the cracks.',
+  'Due diligence research': 'When we get serious about a deal, I spend days researching the market, competitors, team backgrounds, checking references, and compiling it all into a due diligence memo. Each one takes 3-5 days.',
+  'LP communications': 'I draft monthly newsletters, quarterly reports, and ad-hoc updates for our LPs. Each communication needs to be personalized based on what each LP cares about and their portfolio allocation.'
+};
+
+textarea.addEventListener('input', () => {
+  const len = textarea.value.length;
+  charCount.textContent = `${len} / 2000`;
+  if (len > 2000) textarea.value = textarea.value.slice(0, 2000);
+});
+
+function fillExample(chip) {
+  const text = examplePrompts[chip.textContent] || chip.textContent;
+  textarea.value = text;
+  textarea.dispatchEvent(new Event('input'));
+  textarea.focus();
+}
+
+function showError(msg) {
+  errorMsg.textContent = msg;
+  errorMsg.classList.add('active');
+}
+
+function hideError() {
+  errorMsg.classList.remove('active');
+}
+
+function parseMarkdown(text) {
+  return text
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/^\- (.+)$/gm, '<li>$1</li>')
+    .replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>')
+    .replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+}
+
+async function analyze() {
+  const input = textarea.value.trim();
+  if (!input) { textarea.focus(); return; }
+
+  hideError();
+  outputEl.classList.remove('active');
+  loadingEl.classList.add('active');
+  analyzeBtn.disabled = true;
+
+  try {
+    // ⚠️ REPLACE THIS URL with your Cloudflare Worker URL
+    const WORKER_URL = 'https://ai-workflow-proxy.YOUR-SUBDOMAIN.workers.dev';
+
+    const response = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        system: `You are Raghav — an AI implementation specialist who has built automations and AI workflows for CEOs and founders. You speak in first person ("I would...", "I'd build...", "Here's how I'd set this up..."). You're direct, practical, and confident without being salesy. You let the work speak — no grandiose claims, just what you'd build and how.
+
+A VC fund co-founder named Salomon describes a task or workflow challenge. Respond with a specific, actionable plan showing exactly what YOU would build for him.
+
+Structure your response with these markdown headers (##):
+
+## The Problem
+2 sentences max. Restate what's costing him time — show you understood it.
+
+## How I'd Solve This
+Specific tools + architecture. Name exact tools (Claude API, GPT-4, Zapier, Make, n8n, Notion API, specific Python libraries, etc.). Explain how you'd wire them together. Be concrete — not "use AI to automate" but "I'd build a pipeline using X that does Y."
+
+## Implementation Steps
+3-5 numbered steps, each 1-2 sentences. Practical enough that Salomon can see the path from here to done.
+
+## My Build Timeline
+Give an honest estimate of how long it would take YOU to build this end to end. Break it down: "Day 1: I'd set up X. Day 2-3: I'd build Y. Day 4: testing and handoff." Be realistic.
+
+## Time You'd Get Back
+Honest estimate of hours Salomon would save per week/month after implementation.
+
+Rules:
+- Always write in first person as Raghav. "I would build...", "I'd use...", "Here's my approach..."
+- Be specific. Name exact tools, APIs, and approaches.
+- Keep it under 450 words. Dense and useful, not fluffy.
+- Be honest about complexity. If something is hard, say so.
+- No generic advice. Every sentence should be actionable.
+- The build timeline must be realistic — typically 2-5 days for a solid automation, 1-2 weeks for complex systems.
+- Don't boast or self-promote. Just show the plan clearly.`,
+        messages: [{ role: 'user', content: input }]
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(data.error.message || 'API error');
+    }
+
+    const text = data.content.map(b => b.text || '').join('');
+    outputContent.innerHTML = parseMarkdown(text);
+    loadingEl.classList.remove('active');
+    outputEl.classList.add('active');
+    outputEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch (err) {
+    loadingEl.classList.remove('active');
+    showError('Something went wrong — please try again. ' + (err.message || ''));
+  }
+
+  analyzeBtn.disabled = false;
+}
+
+function copyOutput() {
+  const text = outputContent.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.btn-copy');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+
+function reset() {
+  outputEl.classList.remove('active');
+  textarea.value = '';
+  textarea.dispatchEvent(new Event('input'));
+  textarea.focus();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+textarea.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+    analyze();
+  }
+});
+</script>
+</body>
+</html>
